@@ -1,9 +1,13 @@
 // Heroku webhook URL to add into Tradingview: https://pcc-trend-trading-bot.herokuapp.com/webhook
 
     // installed NPM packages:
+// dotenv: pull info from .env file
+// node-fetch: fetch API for node
 // express: web application framework 
+// ws: web socket 
 // body-parser: parse incoming JSON payloads
 // axios: promised based HTTPS requests 
+// crypto : cryptographic capabilities for authentication
 // url: helps with parsing the proxy URL for setting up QuotaGuard Static IP
 
 // sudo -g ngrok: sets up link to remote access apps for testing 
