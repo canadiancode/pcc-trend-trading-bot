@@ -35,7 +35,6 @@ ws.on('open', () => {
 let currentBitcoinPrice = '';
 let timestamp = Date.now().toString();
 
-console.log(`Date now() timestamp: ${timestamp}`);
 ws.on('message', (data) => {
 
   let bitcoinObject = JSON.parse(data);
