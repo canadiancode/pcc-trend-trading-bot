@@ -170,21 +170,65 @@ async function http_request(endpoint,method,data,Info) {
 
 };
 
+// Fetch Wallet Balance
+let currentWalletBalance = 0;
+async function walletBalance(endpoint, method, data, Info) {
+
+  var sign = getSignature(data, secret);
+  let fullendpoint = url + endpoint;
+
+  // Add the proxy configuration
+  const proxyURL = process.env.QUOTAGUARDSTATIC_URL;
+  const proxyConfig = proxyURL ? quotaGuardUrl.parse(proxyURL) : null;
+
+  var config = {
+    method: method,
+    url: fullendpoint,
+    headers: { 
+      'X-BAPI-SIGN-TYPE': '2', 
+      'X-BAPI-SIGN': sign, 
+      'X-BAPI-API-KEY': apiKey, 
+      'X-BAPI-TIMESTAMP': timestamp, 
+      'X-BAPI-RECV-WINDOW': '5000', 
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+    // params: data,
+    proxy: proxyConfig,
+  };
+
+  console.log(Info + " Calling....");
+
+  await axios(config)
+  .then(function (response) {
+    currentWalletBalance = response.data.result.availableBalance
+    console.log(`Current wallet balance is ${currentWalletBalance} USDT.`);
+
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+};
+
   // CREATE ORDER --  CREATE ORDER -- CREATE ORDER
 
 let savedParentOrderId = '';
 
 async function postLongOrderEntry() {
 
+  // Fetch Wallet Balance:
+  var walletEndpoint = "/contract/v3/private/copytrading/wallet/balance";
+  const walletParams = '';
+  await walletBalance(walletEndpoint, "GET", walletParams, "Balance");
+  let position = (currentWalletBalance / currentBitcoinPrice) * 1.4;
+  let positionSize = position.toFixed(4);
+  console.log(`Position size is ${positionSize}.`);
+
   // Create Order endpoint
   endpoint = "/contract/v3/private/copytrading/order/create"
   let orderLinkId = crypto.randomBytes(16).toString("hex");
 
-  // Limit Sell/Buy order:
-  // var data = '{"symbol":"BTCUSDT","orderType":"Limit","side":"Buy","orderLinkId":"' +  orderLinkId + '","qty":"0.001","price":"' +  currentBitcoinPrice + '","timeInForce":"GoodTillCancel","position_idx":"1"}';
-
   // Market Buy order:
-  var data = '{"symbol":"BTCUSDT","orderType":"Market","side":"Buy","orderLinkId":"' +  orderLinkId + '","qty":"0.024","price":"' +  currentBitcoinPrice + '","timeInForce":"GoodTillCancel","position_idx":"1"}';
+  var data = '{"symbol":"BTCUSDT","orderType":"Market","side":"Buy","orderLinkId":"' +  orderLinkId + '","qty":"' +  positionSize + '","price":"' +  currentBitcoinPrice + '","timeInForce":"GoodTillCancel","position_idx":"1"}';
   await http_request(endpoint,"POST",data,"Create");
 
   savedParentOrderId = orderLinkId;
@@ -194,15 +238,20 @@ async function postLongOrderEntry() {
 
 async function postShortOrderEntry() {
 
+  // Fetch Wallet Balance:
+  var walletEndpoint = "/contract/v3/private/copytrading/wallet/balance";
+  const walletParams = '';
+  await walletBalance(walletEndpoint, "GET", walletParams, "Balance");
+  let position = (currentWalletBalance / currentBitcoinPrice) * 1.4;
+  let positionSize = position.toFixed(4);
+  console.log(`Position size is ${positionSize}.`);
+
   // Create Order endpoint
   endpoint = "/contract/v3/private/copytrading/order/create"
   let orderLinkId = crypto.randomBytes(16).toString("hex");
 
-  // Limit Sell/Buy order:
-  // var data = '{"symbol":"BTCUSDT","orderType":"Limit","side":"Sell","orderLinkId":"' +  orderLinkId + '","qty":"0.001","price":"' +  currentBitcoinPrice + '","timeInForce":"GoodTillCancel","position_idx":"1"}';
-
   // Market Sell order:
-  var data = '{"symbol":"BTCUSDT","orderType":"Market","side":"Sell","orderLinkId":"' +  orderLinkId + '","qty":"0.024","price":"' +  currentBitcoinPrice + '","timeInForce":"GoodTillCancel","position_idx":"1"}';
+  var data = '{"symbol":"BTCUSDT","orderType":"Market","side":"Sell","orderLinkId":"' +  orderLinkId + '","qty":"' +  positionSize + '","price":"' +  currentBitcoinPrice + '","timeInForce":"GoodTillCancel","position_idx":"1"}';
   await http_request(endpoint,"POST",data,"Create");
 
   savedParentOrderId = orderLinkId;
@@ -220,8 +269,6 @@ async function closePosition() {
 
   // close order endpoint
   endpoint = "/contract/v3/private/copytrading/order/close"
-
-  // var data = '{"symbol":"BTCUSDT", "parentOrderId":"' +  savedParentOrderId + '"}';
   var data = '{"symbol":"BTCUSDT","parentOrderLinkId":"' +  savedParentOrderId + '"}'
   await http_request(endpoint,"POST",data,"Create");
 
