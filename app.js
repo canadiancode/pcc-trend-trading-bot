@@ -139,6 +139,7 @@ function getSignature(parameters, secret) {
   return crypto.createHmac('sha256', secret).update(timestamp + apiKey + recvWindow + parameters).digest('hex');
 };
 
+// OPEN TRADE -- OPEN TRADE -- OPEN TRADE
 async function http_request(endpoint,method,data,Info) {
 
   var sign=getSignature(data,secret);
@@ -220,7 +221,7 @@ async function walletBalance(endpoint, method, data, Info) {
 };
 
 let openPositions = 0;
-// check for open trades
+// CHECK OPEN TRADES -- CHECK OPEN TRADES --  CHECK OPEN TRADES 
 async function checkOpenPositions(endpoint, method, data, Info) {
 
   var sign = getSignature(data, secret);
@@ -250,13 +251,63 @@ async function checkOpenPositions(endpoint, method, data, Info) {
   await axios(config)
   .then(function (response) {
     // currentOpenTrades = response.data.result;
-    console.log(`Response for open trades: ${response.data.result.list[0]}`)
-    // console.log(`Current wallet balance is ${currentOpenTrades} USDT.`);
+    console.log(`Response for open trades: ${response.data.result.list[0]}`);
+
+    if (Boolean(response.data.result.list[0])) {
+
+      endpoint = "/contract/v3/private/copytrading/position/close";
+    
+      // close All Positions:
+      const data = '{"symbol":"BTCUSDT","positionIdx":"0"}';
+      closeAllPositions(endpoint,"POST",data,"Create");
+    };
 
   })
   .catch(function (error) {
     console.log(error);
   });
+};
+
+// FULLY CLOSE ALL POSITIONS -- FULLY CLOSE ALL POSITIONS 
+async function closeAllPositions(endpoint,method,data,Info) {
+
+  var sign=getSignature(data,secret);
+  if(method=="POST") {
+    fullendpoint=url+endpoint;
+  } else{
+    fullendpoint=url+endpoint+"?"+data;
+    data="";
+  }
+
+  // Add the proxy configuration
+  const proxyURL = process.env.QUOTAGUARDSTATIC_URL;
+  const proxyConfig = proxyURL ? quotaGuardUrl.parse(proxyURL) : null;
+
+  var config = {
+    method: method,
+    url: fullendpoint,
+    headers: { 
+      'X-BAPI-SIGN-TYPE': '2', 
+      'X-BAPI-SIGN': sign, 
+      'X-BAPI-API-KEY': apiKey, 
+      'X-BAPI-TIMESTAMP': timestamp, 
+      'X-BAPI-RECV-WINDOW': '5000', 
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+    data : data ? JSON.stringify(JSON.parse(data)) : "",
+    proxy: proxyConfig,
+  };
+  
+  console.log(Info + " Calling....");
+
+  await axios(config)
+  .then(function (response) {
+    console.log(JSON.stringify(response.data));
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+
 };
 
   // CREATE ORDER --  CREATE ORDER -- CREATE ORDER
@@ -323,13 +374,10 @@ async function closePosition() {
   var data = '{"symbol":"BTCUSDT","parentOrderLinkId":"' +  savedParentOrderId + '"}'
   await http_request(endpoint,"POST",data,"Create");
 
-  // Fetch open trades:
+  // Fetch open positions:
   var openPositions = "/contract/v3/private/copytrading/position/list";
   const walletParams = '';
   await checkOpenPositions(openPositions, "GET", walletParams, "Position");
-  // let position = (currentWalletBalance / currentBitcoinPrice) * leverage;
-  // let positionSize = position.toFixed(4);
-  // console.log(`Position size is ${positionSize}.`);
 
 };
 closePosition();
