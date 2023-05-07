@@ -219,6 +219,46 @@ async function walletBalance(endpoint, method, data, Info) {
   });
 };
 
+let openPositions = 0;
+// check for open trades
+async function checkOpenPositions(endpoint, method, data, Info) {
+
+  var sign = getSignature(data, secret);
+  let fullendpoint = url + endpoint;
+
+  // Add the proxy configuration
+  const proxyURL = process.env.QUOTAGUARDSTATIC_URL;
+  const proxyConfig = proxyURL ? quotaGuardUrl.parse(proxyURL) : null;
+
+  var config = {
+    method: method,
+    url: fullendpoint,
+    headers: { 
+      'X-BAPI-SIGN-TYPE': '2', 
+      'X-BAPI-SIGN': sign, 
+      'X-BAPI-API-KEY': apiKey, 
+      'X-BAPI-TIMESTAMP': timestamp, 
+      'X-BAPI-RECV-WINDOW': '5000', 
+      'Content-Type': 'application/json; charset=utf-8'
+    },
+    // params: data,
+    proxy: proxyConfig,
+  };
+
+  console.log(Info + " Calling....");
+
+  await axios(config)
+  .then(function (response) {
+    // currentOpenTrades = response.data.result;
+    console.log(`Response for open trades: ${response.data.result}`)
+    // console.log(`Current wallet balance is ${currentOpenTrades} USDT.`);
+
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+};
+
   // CREATE ORDER --  CREATE ORDER -- CREATE ORDER
 
 let savedParentOrderId = '';
@@ -283,5 +323,13 @@ async function closePosition() {
   var data = '{"symbol":"BTCUSDT","parentOrderLinkId":"' +  savedParentOrderId + '"}'
   await http_request(endpoint,"POST",data,"Create");
 
+  // Fetch open trades:
+  var openPositions = "/contract/v3/private/copytrading/position/list";
+  const walletParams = '';
+  await checkOpenPositions(openPositions, "GET", walletParams, "Position");
+  // let position = (currentWalletBalance / currentBitcoinPrice) * leverage;
+  // let positionSize = position.toFixed(4);
+  // console.log(`Position size is ${positionSize}.`);
+
 };
-// closePosition();
+closePosition();
