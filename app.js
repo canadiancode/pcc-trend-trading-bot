@@ -222,6 +222,7 @@ async function walletBalance(endpoint, method, data, Info) {
   // CREATE ORDER --  CREATE ORDER -- CREATE ORDER
 
 let savedParentOrderId = '';
+const leverage = 1;
 
 async function postLongOrderEntry() {
 
@@ -229,7 +230,7 @@ async function postLongOrderEntry() {
   var walletEndpoint = "/contract/v3/private/copytrading/wallet/balance";
   const walletParams = '';
   await walletBalance(walletEndpoint, "GET", walletParams, "Balance");
-  let position = (currentWalletBalance / currentBitcoinPrice) * 1.4;
+  let position = (currentWalletBalance / currentBitcoinPrice) * leverage;
   let positionSize = position.toFixed(4);
   console.log(`Position size is ${positionSize}.`);
 
@@ -252,7 +253,7 @@ async function postShortOrderEntry() {
   var walletEndpoint = "/contract/v3/private/copytrading/wallet/balance";
   const walletParams = '';
   await walletBalance(walletEndpoint, "GET", walletParams, "Balance");
-  let position = (currentWalletBalance / currentBitcoinPrice) * 1.4;
+  let position = (currentWalletBalance / currentBitcoinPrice) * leverage;
   let positionSize = position.toFixed(4);
   console.log(`Position size is ${positionSize}.`);
 
