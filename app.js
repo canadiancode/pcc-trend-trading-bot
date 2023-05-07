@@ -250,18 +250,19 @@ async function checkOpenPositions(endpoint, method, data, Info) {
 
   await axios(config)
   .then(function (response) {
-    // currentOpenTrades = response.data.result;
-    console.log(`Response for open trades: ${response.data.result.list[0]}`);
 
+    console.log(`Response for open trades: ${response.data.result.list[0]}`);
     if (Boolean(response.data.result.list[0])) {
 
       endpoint = "/contract/v3/private/copytrading/position/close";
     
       // close All Positions:
-      const data = '{"symbol":"BTCUSDT","positionIdx":"0"}';
-      closeAllPositions(endpoint,"POST",data,"Create");
-    };
+      const buyData = '{"symbol":"BTCUSDT","positionIdx":"1"}';
+      closeAllPositions(endpoint,"POST",buyData,"Create");
 
+      const sellData = '{"symbol":"BTCUSDT","positionIdx":"2"}';
+      closeAllPositions(endpoint,"POST",sellData,"Create");
+    };
   })
   .catch(function (error) {
     console.log(error);
