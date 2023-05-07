@@ -250,7 +250,7 @@ async function checkOpenPositions(endpoint, method, data, Info) {
   await axios(config)
   .then(function (response) {
     // currentOpenTrades = response.data.result;
-    console.log(`Response for open trades: ${response.data.result}`)
+    console.log(`Response for open trades: ${response.data.result.list[0]}`)
     // console.log(`Current wallet balance is ${currentOpenTrades} USDT.`);
 
   })
